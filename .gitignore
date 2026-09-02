@@ -1,0 +1,13 @@
+/vendor/
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-workspace
+composer.lock
