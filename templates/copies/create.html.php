@@ -14,21 +14,21 @@
 
     <form method="post" action="/copies">
         <div>
-            <label for="noteBrute">Note brute / 20</label>
-            <input id="noteBrute" name="noteBrute" type="number" min="0" max="20" step="0.01"
-                   value="<?= htmlspecialchars($old['noteBrute'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+            <label for="note_brute">Note brute / 20</label>
+            <input id="note_brute" name="note_brute" type="number" min="0" max="20" step="0.01"
+                   value="<?= htmlspecialchars($old['note_brute'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
         </div>
 
         <div>
-            <label for="dateDepot">Date de dépôt</label>
-            <input id="dateDepot" name="dateDepot" type="datetime-local"
-                   value="<?= htmlspecialchars($old['dateDepot'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+            <label for="date_depot">Date de dépôt</label>
+            <input id="date_depot" name="date_depot" type="datetime-local"
+                   value="<?= htmlspecialchars($old['date_depot'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
         </div>
 
         <div>
-            <label for="dateLimite">Date limite</label>
-            <input id="dateLimite" name="dateLimite" type="datetime-local"
-                   value="<?= htmlspecialchars($old['dateLimite'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+            <label for="date_limite">Date limite</label>
+            <input id="date_limite" name="date_limite" type="datetime-local"
+                   value="<?= htmlspecialchars($old['date_limite'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
         </div>
 
         <button type="submit">Soumettre</button>
