@@ -13,5 +13,12 @@
     ],
     "require": {
         "vlucas/phpdotenv": "^5.7"
+    },
+    "scripts": {
+        "test": [
+            "@php tests/CalculNoteAvecRetardServiceTest.php",
+            "@php tests/SoumissionCopieServiceTest.php",
+            "@php tests/RouterTest.php"
+        ]
     }
 }
