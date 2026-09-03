@@ -10,13 +10,12 @@ final class Router
 {
     /** @var array<int, array{method:string,path:string,handler:callable}> */
     private array $routes = [];
+    private readonly Closure $notFoundHandler;
 
     public function __construct(callable $notFoundHandler)
     {
         $this->notFoundHandler = Closure::fromCallable($notFoundHandler);
     }
-
-    private readonly Closure $notFoundHandler;
 
     public function get(string $path, callable $handler): void
     {
@@ -32,30 +31,14 @@ final class Router
     {
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
         $method = strtoupper($method);
-        $pathMatched = false;
-        $allowedMethods = [];
 
         foreach ($this->routes as $route) {
             $parameters = $this->match($route['path'], $path);
-            if ($parameters === null) {
-                continue;
-            }
-
-            $pathMatched = true;
-            $allowedMethods[] = $route['method'];
-
-            if ($route['method'] !== $method) {
+            if ($parameters === null || $route['method'] !== $method) {
                 continue;
             }
 
             ($route['handler'])(...$parameters);
-            return;
-        }
-
-        if ($pathMatched) {
-            http_response_code(405);
-            header('Allow: ' . implode(', ', array_unique($allowedMethods)));
-            ($this->notFoundHandler)('Méthode HTTP non autorisée.');
             return;
         }
 
