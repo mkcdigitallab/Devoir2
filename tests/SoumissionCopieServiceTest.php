@@ -32,9 +32,9 @@ $service = new SoumissionCopieService(
 );
 
 $dto = SoumettreCopieDTO::fromFormData([
-    'noteBrute' => '15',
-    'dateDepot' => '2026-09-04 10:00:00',
-    'dateLimite' => '2026-09-03 23:59:59',
+    'note_brute' => '15',
+    'date_depot' => '2026-09-04 10:00:00',
+    'date_limite' => '2026-09-03 23:59:59',
 ]);
 
 $copie = $service->soumettre($dto);
