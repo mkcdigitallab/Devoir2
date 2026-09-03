@@ -1,105 +1,74 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\DTO\SoumettreCopieDTO;
-use App\Entity\CopieExamen;
-use App\Repository\CopieExamenRepository;
+use App\Repository\CopieExamenRepositoryInterface;
+use App\Services\SoumissionCopieService;
 use InvalidArgumentException;
+use Throwable;
 
-/**
- * Contrôleur responsable de la gestion des soumissions de copies d'examen
- */
-class CopieExamenController
+final class CopieExamenController
 {
-    private CopieExamenRepository $repository;
-
-    public function __construct()
-    {
-        $this->repository = new CopieExamenRepository();
+    public function __construct(
+        private readonly SoumissionCopieService $soumissionService,
+        private readonly CopieExamenRepositoryInterface $repository
+    ) {
     }
 
-    /**
-     * Affiche le formulaire de soumission
-     */
-    public function afficherFormulaire(): void
+    public function create(): void
     {
-        include __DIR__ . '/../../templates/config/formulaire-copie.html.php';
+        $old = [];
+        $error = null;
+        require __DIR__ . '/../../templates/copies/create.html.php';
     }
 
-    /**
-     * Traite la soumission d'une copie
-     * 
-     * Workflow :
-     * 1. Convertir les données du formulaire via le DTO
-     * 2. Créer l'entité CopieExamen
-     * 3. Enregistrer en base de données
-     * 
-     * @param array $postData Données brutes de $_POST
-     * @return array ['success' => bool, 'message' => string, 'id' => ?int]
-     */
-    public function soumettreCopie(array $postData): array
+    public function store(array $postData): void
     {
+        $old = $postData;
+
         try {
-            // Étape 1 : Convertir les données via le DTO
             $dto = SoumettreCopieDTO::fromFormData($postData);
+            $copie = $this->soumissionService->soumettre($dto);
 
-            // Étape 2 : Créer l'entité CopieExamen
-            $copie = CopieExamen::create(
-                $dto->getDateDepot(),
-                $dto->getNoteBrute(),
-                $dto->getDateLimite()
-            );
-
-            // Étape 3 : Enregistrer en base de données
-            $id = $this->repository->save($copie);
-
-            return [
-                'success' => true,
-                'message' => 'Copie enregistrée avec succès',
-                'id' => $id,
-                'data' => $dto->toArray(),
-            ];
+            header('Location: /copies/' . $copie->getId(), true, 303);
+            exit;
         } catch (InvalidArgumentException $e) {
-            return [
-                'success' => false,
-                'message' => 'Données invalides: ' . $e->getMessage(),
-                'id' => null,
-            ];
-        } catch (\PDOException $e) {
-            return [
-                'success' => false,
-                'message' => 'Erreur base de données: ' . $e->getMessage(),
-                'id' => null,
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'message' => 'Erreur serveur: ' . $e->getMessage(),
-                'id' => null,
-            ];
+            http_response_code(422);
+            $error = $e->getMessage();
+        } catch (Throwable $e) {
+            http_response_code(500);
+            $error = 'Une erreur interne est survenue.';
         }
+
+        require __DIR__ . '/../../templates/copies/create.html.php';
     }
 
-    /**
-     * Affiche la liste des copies
-     */
-    public function afficherListe(): void
+    public function index(): void
     {
         $copies = $this->repository->findAll();
-        // À implémenter : affichage de la liste
+        require __DIR__ . '/../../templates/copies/index.html.php';
     }
 
-    /**
-     * Affiche les détails d'une copie
-     */
-    public function afficherDetail(int $id): void
+    public function show(int $id): void
     {
         $copie = $this->repository->findById($id);
-        if (!$copie) {
-            // À implémenter : affichage d'une erreur 404
+
+        if ($copie === null) {
+            http_response_code(404);
+            $message = 'La copie demandée est introuvable.';
+            require __DIR__ . '/../../templates/errors/404.html.php';
             return;
         }
-        // À implémenter : affichage des détails
+
+        require __DIR__ . '/../../templates/copies/show.html.php';
+    }
+
+    public function notFound(string $message = 'Page introuvable.'): void
+    {
+        http_response_code(404);
+        require __DIR__ . '/../../templates/errors/404.html.php';
     }
 }
