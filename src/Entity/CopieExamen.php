@@ -1,24 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use DateTime;
-
+use InvalidArgumentException;
 
 class CopieExamen extends AbstractDocument
 {
-
     private float $noteBrute;
-
-
     private float $noteFinale;
-
-
-    private bool $penaliteAppliquee;
-
-
+    private bool $penaliteAppliquee = false;
     private DateTime $dateLimite;
-
 
     protected function __construct(
         DateTime $dateDepot,
@@ -27,13 +21,11 @@ class CopieExamen extends AbstractDocument
         ?int $id = null
     ) {
         parent::__construct($dateDepot, $id);
-
         $this->setNoteBrute($noteBrute);
         $this->dateLimite = $dateLimite;
         $this->noteFinale = $noteBrute;
     }
 
-  
     public static function create(
         DateTime $dateDepot,
         float $noteBrute,
@@ -42,39 +34,39 @@ class CopieExamen extends AbstractDocument
         return new self($dateDepot, $noteBrute, $dateLimite);
     }
 
- 
     public static function fromDatabase(array $data): self
     {
         $copie = new self(
             new DateTime($data['date_depot']),
-            (float)$data['note_brute'],
+            (float) $data['note_brute'],
             new DateTime($data['date_limite']),
-            (int)$data['id']
+            (int) $data['id']
         );
 
-        if ($data['penalite_appliquee']) {
-            $copie->appliquerPenalite(0);
-        }
+        $copie->restaurerResultatCalcul(
+            (float) $data['note_finale'],
+            (bool) $data['penalite_appliquee']
+        );
 
         return $copie;
     }
-
 
     public function getNoteBrute(): float
     {
         return $this->noteBrute;
     }
 
-
     public function setNoteBrute(float $noteBrute): void
     {
         if ($noteBrute < 0 || $noteBrute > 20) {
-            throw new \InvalidArgumentException(
-                "La note brute doit être entre 0 et 20, reçu: {$noteBrute}"
+            throw new InvalidArgumentException(
+                "La note brute doit être entre 0 et 20, reçu : {$noteBrute}"
             );
         }
+
         $this->noteBrute = $noteBrute;
-        $this->calculerNoteFinale();
+        $this->noteFinale = $noteBrute;
+        $this->penaliteAppliquee = false;
     }
 
     public function getNoteFinale(): float
@@ -82,41 +74,44 @@ class CopieExamen extends AbstractDocument
         return $this->noteFinale;
     }
 
-
     public function getPenaliteAppliquee(): bool
     {
         return $this->penaliteAppliquee;
     }
 
-
-    public function appliquerPenalite(float $penalite): void
+    /**
+     * Enregistre le résultat produit par une stratégie de calcul.
+     * L'entité ne connaît pas la règle de calcul.
+     */
+    public function appliquerResultatCalcul(float $noteFinale, bool $penaliteAppliquee): void
     {
-        $this->penaliteAppliquee = true;
-        $this->calculerNoteFinale();
+        if ($noteFinale < 0 || $noteFinale > 20) {
+            throw new InvalidArgumentException(
+                'La note finale doit être comprise entre 0 et 20.'
+            );
+        }
+
+        $this->noteFinale = $noteFinale;
+        $this->penaliteAppliquee = $penaliteAppliquee;
     }
 
+    /**
+     * Restaure l'état déjà enregistré en base de données.
+     */
+    private function restaurerResultatCalcul(float $noteFinale, bool $penaliteAppliquee): void
+    {
+        $this->appliquerResultatCalcul($noteFinale, $penaliteAppliquee);
+    }
 
     public function getDateLimite(): DateTime
     {
         return $this->dateLimite;
     }
 
-
     public function setDateLimite(DateTime $dateLimite): void
     {
         $this->dateLimite = $dateLimite;
     }
-
-
-    private function calculerNoteFinale(): void
-    {
-        $finale = $this->noteBrute;
-        if ($this->penaliteAppliquee) {
-            $finale -= 2;
-        }
-        $this->noteFinale = max(0, $finale);
-    }
-
 
     public function estEnRetard(): bool
     {
