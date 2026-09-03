@@ -10,23 +10,38 @@ use DateTime;
 $strategie = new CalculNoteAvecRetardService();
 
 $tests = [
-    'dépôt à temps' => fn () => $strategie->calculer(
-        15.0,
-        new DateTime('2026-09-03 10:00:00'),
-        new DateTime('2026-09-03 23:59:59')
-    ) === 15.0,
+    'dépôt à temps' => function () use ($strategie): bool {
+        $resultat = $strategie->calculer(
+            15.0,
+            new DateTime('2026-09-03 10:00:00'),
+            new DateTime('2026-09-03 23:59:59')
+        );
 
-    'dépôt en retard' => fn () => $strategie->calculer(
-        15.0,
-        new DateTime('2026-09-04 10:00:00'),
-        new DateTime('2026-09-03 23:59:59')
-    ) === 13.0,
+        return $resultat->getNoteFinale() === 15.0
+            && !$resultat->isPenaliteAppliquee();
+    },
 
-    'note finale jamais négative' => fn () => $strategie->calculer(
-        1.0,
-        new DateTime('2026-09-04 10:00:00'),
-        new DateTime('2026-09-03 23:59:59')
-    ) === 0.0,
+    'dépôt en retard' => function () use ($strategie): bool {
+        $resultat = $strategie->calculer(
+            15.0,
+            new DateTime('2026-09-04 10:00:00'),
+            new DateTime('2026-09-03 23:59:59')
+        );
+
+        return $resultat->getNoteFinale() === 13.0
+            && $resultat->isPenaliteAppliquee();
+    },
+
+    'note finale jamais négative' => function () use ($strategie): bool {
+        $resultat = $strategie->calculer(
+            1.0,
+            new DateTime('2026-09-04 10:00:00'),
+            new DateTime('2026-09-03 23:59:59')
+        );
+
+        return $resultat->getNoteFinale() === 0.0
+            && $resultat->isPenaliteAppliquee();
+    },
 ];
 
 $success = 0;
