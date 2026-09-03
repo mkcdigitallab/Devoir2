@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Router;
 
+use Closure;
+
 final class Router
 {
     /** @var array<int, array{method:string,path:string,handler:callable}> */
     private array $routes = [];
 
-    public function __construct(private readonly callable $notFoundHandler)
+    public function __construct(callable $notFoundHandler)
     {
+        $this->notFoundHandler = Closure::fromCallable($notFoundHandler);
     }
+
+    private readonly Closure $notFoundHandler;
 
     public function get(string $path, callable $handler): void
     {
@@ -28,6 +33,7 @@ final class Router
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
         $method = strtoupper($method);
         $pathMatched = false;
+        $allowedMethods = [];
 
         foreach ($this->routes as $route) {
             $parameters = $this->match($route['path'], $path);
@@ -36,6 +42,8 @@ final class Router
             }
 
             $pathMatched = true;
+            $allowedMethods[] = $route['method'];
+
             if ($route['method'] !== $method) {
                 continue;
             }
@@ -46,7 +54,7 @@ final class Router
 
         if ($pathMatched) {
             http_response_code(405);
-            header('Allow: GET, POST');
+            header('Allow: ' . implode(', ', array_unique($allowedMethods)));
             ($this->notFoundHandler)('Méthode HTTP non autorisée.');
             return;
         }
