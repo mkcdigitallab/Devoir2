@@ -11,12 +11,9 @@ use DateTime;
  */
 interface CalculNoteInterface
 {
-    /**
-     * Calcule la note finale à partir de la note brute et des dates.
-     */
     public function calculer(
         float $noteBrute,
         DateTime $dateDepot,
         DateTime $dateLimite
-    ): float;
+    ): ResultatCalculNote;
 }
