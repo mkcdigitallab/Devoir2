@@ -25,26 +25,43 @@ final class CopieExamenController
         require __DIR__ . '/../../templates/copies/create.html.php';
     }
 
-    public function store(array $postData): void
-    {
-        $old = $postData;
+    public function store(): void
+{
+    $postData = $_POST;
 
-        try {
-            $dto = SoumettreCopieDTO::fromFormData($postData);
-            $copie = $this->soumissionService->soumettre($dto);
+    $old = $postData;
 
-            header('Location: /copies/' . $copie->getId(), true, 303);
-            exit;
-        } catch (InvalidArgumentException $e) {
-            http_response_code(422);
-            $error = $e->getMessage();
-        } catch (Throwable $e) {
-            http_response_code(500);
-            $error = 'Une erreur interne est survenue.';
-        }
+    try {
+        $dto = SoumettreCopieDTO::fromFormData($postData);
 
-        require __DIR__ . '/../../templates/copies/create.html.php';
-    }
+        $copie = $this->soumissionService->soumettre($dto);
+
+        header('Location: /copies/' . $copie->getId(), true, 303);
+        exit;
+
+    } catch (InvalidArgumentException $e) {
+
+        http_response_code(422);
+
+        $error = $e->getMessage();
+
+    }  catch (Throwable $e) {
+
+    http_response_code(500);
+
+    $error = $e->getMessage();
+
+    echo '<pre>';
+    echo 'ERREUR : ' . htmlspecialchars($e->getMessage()) . PHP_EOL;
+    echo 'FICHIER : ' . $e->getFile() . PHP_EOL;
+    echo 'LIGNE : ' . $e->getLine() . PHP_EOL;
+    echo '</pre>';
+
+    exit;
+}
+
+    require __DIR__ . '/../../templates/copies/create.html.php';
+}
 
     public function index(): void
     {
